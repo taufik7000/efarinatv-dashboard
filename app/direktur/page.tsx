@@ -72,24 +72,24 @@ export default async function DirekturDashboardPage() {
       </div>
 
       {/* Grid untuk kartu statistik yang responsif */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 rounded-2xl">
         {stats.map((stat, index) => (
-          <Card key={index}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.description}</p>
-            </CardContent>
-          </Card>
+        <Card key={index} className="rounded-xl">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+    <stat.icon className="h-4 w-4 text-muted-foreground" />
+    </CardHeader>
+    <CardContent>
+    <div className="text-2xl font-bold">{stat.value}</div>
+    <p className="text-xs text-muted-foreground">{stat.description}</p>
+         </CardContent>
+    </Card>
         ))}
       </div>
 
       {/* Placeholder untuk grafik atau tabel lainnya */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+        <Card className="lg:col-span-4 ">
             <CardHeader>
                 <CardTitle>Performa Anggaran vs Realisasi</CardTitle>
                 <CardDescription>Visualisasi penggunaan anggaran per kategori.</CardDescription>
