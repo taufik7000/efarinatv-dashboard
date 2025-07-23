@@ -1,4 +1,4 @@
-// app/admin/users/add/page.tsx - Add user page with inline form
+// app/admin/users/add/page.tsx - Fixed version
 
 "use client";
 
@@ -7,10 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, Check, AlertCircle, X } from "lucide-react";
+import { ArrowLeft, Loader2, Check, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createUserAction } from "@/app/admin/users/add/actions";
 
 const roles = [
   { value: "admin", label: "Admin" },
@@ -22,64 +21,10 @@ const roles = [
   { value: "team", label: "Team" },
 ];
 
-// Success Modal Component
-function SuccessModal({ 
-  isOpen, 
-  onClose, 
-  userName, 
-  userRole 
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
-  userName: string; 
-  userRole: string; 
-}) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <Check className="w-6 h-6 text-green-600" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900">User Created Successfully!</h3>
-          </div>
-        </div>
-        
-        <div className="mb-6">
-          <p className="text-gray-600 mb-3">
-            The new user account has been created successfully:
-          </p>
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">Name:</span>
-              <span className="text-gray-900">{userName}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="font-medium text-gray-700">Role:</span>
-              <span className="text-gray-900 capitalize">{userRole}</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <Button onClick={onClose} className="flex-1">
-            <Check className="w-4 h-4 mr-2" />
-            Continue
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function AddUserPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [createdUser, setCreatedUser] = useState({ name: "", role: "" });
+  const [messageType, setMessageType] = useState<"success" | "error">("error");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -98,17 +43,21 @@ export default function AddUserPage() {
       // Validasi input
       if (!fullName || !email || !password || !role) {
         setMessage("All fields are required");
+        setMessageType("error");
+        setIsLoading(false);
         return;
       }
 
       if (password.length < 6) {
         setMessage("Password must be at least 6 characters");
+        setMessageType("error");
+        setIsLoading(false);
         return;
       }
 
       console.log('Creating user with email:', email);
 
-      // Use server action instead of API route
+      // Call API route
       const result = await fetch('/api/admin/create-user', {
         method: 'POST',
         headers: {
@@ -127,28 +76,31 @@ export default function AddUserPage() {
       if (!result.ok) {
         console.error('API Error:', data);
         setMessage(data.error || 'Failed to create user');
+        setMessageType("error");
+        setIsLoading(false);
         return;
       }
 
       console.log('User created successfully:', data);
       setMessage(`User ${fullName} successfully created with role ${role}`);
+      setMessageType("success");
       
       // Reset form
       e.currentTarget.reset();
       
-      // Redirect after success
+      // Navigate after a short delay to show success message
       setTimeout(() => {
         router.push('/admin/users');
-        router.refresh(); // Refresh to show new user
-      }, 2000);
+      }, 1500);
 
     } catch (error: any) {
       console.error('Unexpected error:', error);
       setMessage("An unexpected error occurred: " + error.message);
-    } finally {
+      setMessageType("error");
       setIsLoading(false);
     }
   }
+
   return (
     <div className="flex flex-1 flex-col gap-4 md:gap-8">
       {/* Header */}
@@ -178,11 +130,11 @@ export default function AddUserPage() {
           <CardContent>
             {message && (
               <div className={`mb-4 p-3 rounded flex items-center gap-2 text-sm ${
-                message.includes('successfully') || message.includes('created')
+                messageType === 'success'
                   ? 'bg-green-50 text-green-700 border border-green-200'
                   : 'bg-red-50 text-red-700 border border-red-200'
               }`}>
-                {message.includes('successfully') || message.includes('created') ? (
+                {messageType === 'success' ? (
                   <Check className="h-4 w-4" />
                 ) : (
                   <AlertCircle className="h-4 w-4" />
@@ -235,7 +187,7 @@ export default function AddUserPage() {
                   name="role"
                   required
                   disabled={isLoading}
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <option value="">Select a role</option>
                   {roles.map((role) => (

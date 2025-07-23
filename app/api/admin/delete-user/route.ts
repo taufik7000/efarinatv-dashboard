@@ -24,12 +24,11 @@ export async function DELETE(request: NextRequest) {
   try {
     console.log('=== DELETE USER API START ===');
     
+    // Parse request body
     const body = await request.json();
     const { userId } = body;
 
     console.log('Received userId:', userId);
-    console.log('UserId type:', typeof userId);
-    console.log('UserId length:', userId?.length);
 
     // Validation
     if (!userId) {
@@ -78,13 +77,10 @@ export async function DELETE(request: NextRequest) {
 
     if (profileError) {
       console.error('Error deleting profile:', profileError);
-      return NextResponse.json(
-        { error: `Error deleting profile: ${profileError.message}` },
-        { status: 500 }
-      );
+      // Continue to try deleting auth user anyway
+    } else {
+      console.log('Profile deleted successfully');
     }
-
-    console.log('Profile deleted successfully');
 
     // Delete from auth.users
     console.log('Deleting from auth.users...');
@@ -115,4 +111,9 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Handle OPTIONS request for CORS
+export async function OPTIONS(request: NextRequest) {
+  return new NextResponse(null, { status: 200 });
 }
