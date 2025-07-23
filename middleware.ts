@@ -1,16 +1,28 @@
-// middleware.ts (di root)
-
 import { type NextRequest } from "next/server";
-
-// Ini adalah jalur impor yang benar dan direkomendasikan
 import { mainMiddleware } from "@/lib/middleware/main";
 
-export function middleware(request: NextRequest) {
-  return mainMiddleware(request);
+export async function middleware(request: NextRequest) {
+  return await mainMiddleware(request);
 }
 
+// More specific matcher to reduce middleware calls
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    /*
+     * Match specific paths only:
+     * - login page
+     * - protected role routes
+     * - root page
+     * Exclude all static assets and API routes
+     */
+    '/',
+    '/login/:path*',
+    '/admin/:path*',
+    '/direktur/:path*',
+    '/keuangan/:path*',
+    '/redaksi/:path*',
+    '/hrd/:path*',
+    '/marketing/:path*',
+    '/team/:path*'
   ],
-};
+}

@@ -1,4 +1,4 @@
-// lib/supabase/middleware.ts
+// lib/supabase/middleware.ts - Fixed version
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
@@ -36,9 +36,10 @@ export async function updateSession(request: NextRequest) {
           });
         },
         remove(name: string, options: CookieOptions) {
+          // Fixed: Add missing value parameter and set to empty string
           request.cookies.set({
             name,
-            value,
+            value: "", // Fixed: Added missing value
             ...options,
           });
           response = NextResponse.next({
@@ -48,7 +49,7 @@ export async function updateSession(request: NextRequest) {
           });
           response.cookies.set({
             name,
-            value: "",
+            value: "", // Fixed: Added missing value
             ...options,
           });
         },
@@ -56,9 +57,15 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
+  // Get user from Supabase
   const {
     data: { user },
+    error
   } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error('Error getting user in middleware:', error);
+  }
 
   return { response, user };
 }
