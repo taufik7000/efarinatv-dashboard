@@ -1,3 +1,5 @@
+// app/direktur/layout.tsx - Layout khusus untuk dashboard direktur
+
 import Link from "next/link";
 import { UserNav } from "@/components/auth/user-nav";
 import { Button } from "@/components/ui/button";
@@ -8,7 +10,8 @@ import {
   Activity,
   Settings,
   Menu,
-  Building2
+  Building2,
+  Receipt, // Ikon baru untuk transaksi
 } from "lucide-react";
 import {
   Sheet,
@@ -32,14 +35,14 @@ const directorMenuItems = [
     icon: Wallet,
   },
   {
+    title: "Semua Transaksi", // Menu baru
+    href: "/direktur/transactions",
+    icon: Receipt,
+  },
+  {
     title: "Laporan Keuangan",
     href: "/direktur/reports",
     icon: BarChart3,
-  },
-  {
-    title: "Analitik & Performa",
-    href: "/direktur/analytics",
-    icon: Activity,
   },
   {
     title: "Pengaturan",

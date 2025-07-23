@@ -10,8 +10,16 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createCategoryAction, createBudgetAction } from "./actions";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, CalendarIcon } from "lucide-react";
 
+// Impor komponen dan utilitas yang diperlukan untuk kalender
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+
+
+// Tipe data yang diterima dari server
 type Category = { id: string; name: string; description: string | null };
 type Budget = {
     id: string;
@@ -21,12 +29,18 @@ type Budget = {
     category: { name: string } | null;
 };
 
+// Fungsi pembantu
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 const formatRupiah = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
+// Komponen Klien yang berisi seluruh UI halaman
 export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCategories: Category[], serverBudgets: Budget[] }) {
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [isBudgetModalOpen, setBudgetModalOpen] = useState(false);
+    
+    // State untuk menyimpan tanggal yang dipilih di kalender
+    const [periodStart, setPeriodStart] = useState<Date | undefined>();
+    const [periodEnd, setPeriodEnd] = useState<Date | undefined>();
 
     return (
         <div className="flex flex-col gap-6">
@@ -37,6 +51,7 @@ export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCa
                 </p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Kartu untuk mengelola Kategori Anggaran */}
                 <Card className="lg:col-span-1">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -79,6 +94,8 @@ export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCa
                         </Table>
                     </CardContent>
                 </Card>
+
+                {/* Kartu untuk mengelola Rencana Anggaran */}
                 <Card className="lg:col-span-2">
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -91,8 +108,14 @@ export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCa
                             </DialogTrigger>
                             <DialogContent>
                                 <form action={async (formData) => {
+                                    // Menambahkan tanggal dari state ke form data sebelum dikirim
+                                    if(periodStart) formData.set('periodStart', format(periodStart, 'yyyy-MM-dd'));
+                                    if(periodEnd) formData.set('periodEnd', format(periodEnd, 'yyyy-MM-dd'));
+                                    
                                     await createBudgetAction(formData);
                                     setBudgetModalOpen(false);
+                                    setPeriodStart(undefined);
+                                    setPeriodEnd(undefined);
                                 }}>
                                     <DialogHeader><DialogTitle>Alokasi Anggaran Baru</DialogTitle></DialogHeader>
                                     <div className="py-4 space-y-4">
@@ -109,14 +132,35 @@ export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCa
                                             <Label htmlFor="allocatedAmount">Jumlah Alokasi (Rp)</Label>
                                             <Input id="allocatedAmount" name="allocatedAmount" type="number" required />
                                         </div>
+                                        {/* PEMBARUAN: Menggunakan komponen Calendar */}
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <Label htmlFor="periodStart">Tanggal Mulai</Label>
-                                                <Input id="periodStart" name="periodStart" type="date" required />
+                                                <Label>Tanggal Mulai</Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !periodStart && "text-muted-foreground")}>
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {periodStart ? format(periodStart, "PPP") : <span>Pilih tanggal</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <Calendar mode="single" selected={periodStart} onSelect={setPeriodStart} initialFocus />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                             <div>
-                                                <Label htmlFor="periodEnd">Tanggal Selesai</Label>
-                                                <Input id="periodEnd" name="periodEnd" type="date" required />
+                                                <Label>Tanggal Selesai</Label>
+                                                <Popover>
+                                                    <PopoverTrigger asChild>
+                                                        <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !periodEnd && "text-muted-foreground")}>
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {periodEnd ? format(periodEnd, "PPP") : <span>Pilih tanggal</span>}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent className="w-auto p-0">
+                                                        <Calendar mode="single" selected={periodEnd} onSelect={setPeriodEnd} initialFocus />
+                                                    </PopoverContent>
+                                                </Popover>
                                             </div>
                                         </div>
                                     </div>
