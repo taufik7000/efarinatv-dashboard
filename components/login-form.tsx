@@ -108,13 +108,6 @@ export function LoginForm({
               </Button>
             </div>
           </form>
-          
-          <div className="mt-4 text-xs text-muted-foreground">
-            <p>Demo accounts:</p>
-            <p>admin@efarinatv.com (Admin)</p>
-            <p>direktur@efarinatv.com (Direktur)</p>
-            <p>keuangan@efarinatv.com (Keuangan)</p>
-          </div>
         </CardContent>
       </Card>
     </div>
