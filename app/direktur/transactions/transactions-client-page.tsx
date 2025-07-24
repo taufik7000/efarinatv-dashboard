@@ -287,24 +287,13 @@ export function TransactionsClientPage({
                 
                 <div className="flex gap-2">
                     <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleRefresh}
-                        disabled={isRefreshing || isLoading}
-                        className="flex-1 sm:flex-none"
-                    >
-                        <RefreshCw className={cn("h-4 w-4 mr-2", (isRefreshing || isLoading) && "animate-spin")} />
-                        {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                    </Button>
-                    
-                    <Button 
                         onClick={() => setIsAddModalOpen(true)}
                         size="sm"
                         className="flex-1 sm:flex-none"
                         disabled={isLoading}
                     >
                         <Plus className="h-4 w-4 mr-2" />
-                        Tambah
+                        Tambah Transaksi
                     </Button>
                 </div>
             </div>
@@ -326,7 +315,7 @@ export function TransactionsClientPage({
                 <Card>
                     <CardContent className="p-4">
                         <div className="p-1 rounded-md border">
-                            <Table className="mt-1 mb-0.5">
+                            <Table className="">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Tanggal</TableHead>

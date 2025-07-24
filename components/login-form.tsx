@@ -97,15 +97,6 @@ export function LoginForm({
               >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
-              
-              <Button 
-                formAction={handleSignup} 
-                variant="outline" 
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? "Creating account..." : "Sign Up"}
-              </Button>
             </div>
           </form>
         </CardContent>
