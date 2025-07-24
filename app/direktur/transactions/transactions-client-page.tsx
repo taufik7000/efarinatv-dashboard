@@ -197,23 +197,9 @@ export function TransactionsClientPage({
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <CardTitle>Semua Transaksi</CardTitle>
-                            <CardDescription>
-                                Daftar semua transaksi pemasukan dan pengeluaran yang tercatat dalam sistem.
-                                {transactions.length > 0 && ` (${transactions.length} transaksi)`}
-                            </CardDescription>
                         </div>
                         
                         <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={handleRefresh}
-                                disabled={isRefreshing}
-                            >
-                                <RefreshCw className={cn("h-4 w-4 mr-2", isRefreshing && "animate-spin")} />
-                                Refresh
-                            </Button>
-                            
                             <Button onClick={() => setIsAddModalOpen(true)}>
                                 <Plus className="h-4 w-4 mr-2" />
                                 Tambah Transaksi
