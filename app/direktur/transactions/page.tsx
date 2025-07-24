@@ -1,4 +1,4 @@
-// app/direktur/transactions/page.tsx - Production version
+
 
 import { createClient } from "@/lib/supabase/server";
 import { TransactionsClientPage } from "./transactions-client-page";
@@ -11,10 +11,10 @@ export default async function TransactionsPage() {
 
     try {
         const supabase = await createClient();
-        
+
         // 1. Dapatkan pengguna yang sedang login
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+
         if (userError || !user) {
             // Jika tidak ada user, tampilkan pesan error atau redirect
             // console.error("Authentication Error:", userError?.message || "User not found.");
@@ -80,8 +80,8 @@ export default async function TransactionsPage() {
 
     // 5. Render komponen client dengan data dari server
     return (
-        <TransactionsClientPage 
-            serverTransactions={transactions} 
+        <TransactionsClientPage
+            serverTransactions={transactions}
             serverCategories={categories}
             userRole={userRole}
         />
