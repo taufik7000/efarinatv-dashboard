@@ -45,7 +45,9 @@ export function TransactionActions({
 
   if (!canEdit) return null;
 
-  const handleApprove = async () => {
+  // Modifikasi handler untuk menerima event dan menghentikan propagasi
+  const handleApprove = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Hentikan propagasi event
     // Jika tidak ada bukti transaksi, tampilkan modal upload
     if (!transaction.receipt_url) {
       setShowReceiptModal(true);
@@ -60,11 +62,15 @@ export function TransactionActions({
     setShowReceiptModal(false);
   };
 
-  const handleReject = async () => {
+  // Modifikasi handler untuk menerima event dan menghentikan propagasi
+  const handleReject = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Hentikan propagasi event
     await onUpdateStatus(transaction.id, 'Ditolak');
   };
 
-  const handleEdit = () => {
+  // Modifikasi handler untuk menerima event dan menghentikan propagasi
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Hentikan propagasi event
     onEdit(transaction);
   };
 
@@ -72,7 +78,11 @@ export function TransactionActions({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0"
+            onClick={(e) => e.stopPropagation()} // Pertahankan ini untuk tombol pemicu dropdown
+          >
             <MoreHorizontal className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -81,7 +91,7 @@ export function TransactionActions({
           <DropdownMenuSeparator />
           
           <DropdownMenuItem 
-            onClick={handleEdit}
+            onClick={handleEdit} // Panggil handler yang sudah dimodifikasi
             disabled={transaction.status !== 'Tertunda'}
           >
             <Edit className="mr-2 h-4 w-4" />
@@ -92,14 +102,14 @@ export function TransactionActions({
             <>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
-                onClick={handleApprove}
+                onClick={handleApprove} // Panggil handler yang sudah dimodifikasi
                 className="text-green-600 focus:text-green-600"
               >
                 <Check className="mr-2 h-4 w-4" />
                 Setujui
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={handleReject}
+                onClick={handleReject} // Panggil handler yang sudah dimodifikasi
                 className="text-red-600 focus:text-red-600"
               >
                 <XCircle className="mr-2 h-4 w-4" />

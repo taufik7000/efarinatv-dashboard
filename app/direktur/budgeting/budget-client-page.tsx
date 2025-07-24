@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-
+import { BudgetActualsChart } from "./components/budget-actuals-chart"; // Impor komponen chart baru
 
 // Tipe data yang diterima dari server
 type Category = { id: string; name: string; description: string | null };
@@ -29,12 +29,33 @@ type Budget = {
     category: { name: string } | null;
 };
 
+// New type for chart data and config (sesuai dengan yang diteruskan dari page.tsx)
+type ChartDataPoint = {
+    date: string;
+    'Anggaran Dialokasikan': number;
+    'Realisasi Pengeluaran': number;
+    [key: string]: number | string;
+};
+
+type ChartConfig = Record<string, { label: string; color: string }>;
+
+
 // Fungsi pembantu
 const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 const formatRupiah = (value: number) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 
 // Komponen Klien yang berisi seluruh UI halaman
-export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCategories: Category[], serverBudgets: Budget[] }) {
+export function BudgetClientPage({ 
+    serverCategories, 
+    serverBudgets, 
+    chartData, 
+    chartConfig 
+}: { 
+    serverCategories: Category[], 
+    serverBudgets: Budget[],
+    chartData: ChartDataPoint[], // Terima data chart
+    chartConfig: ChartConfig,    // Terima konfigurasi chart
+}) {
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [isBudgetModalOpen, setBudgetModalOpen] = useState(false);
     
@@ -191,6 +212,22 @@ export function BudgetClientPage({ serverCategories, serverBudgets }: { serverCa
                     </CardContent>
                 </Card>
             </div>
+            {/* Kartu untuk Visualisasi Anggaran vs Realisasi */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Realisasi Anggaran per Bulan</CardTitle>
+                    <CardDescription>Perbandingan anggaran yang dialokasikan dengan pengeluaran aktual setiap bulan.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {chartData.length > 0 ? (
+                        <BudgetActualsChart chartData={chartData} chartConfig={chartConfig} />
+                    ) : (
+                        <div className="text-center text-muted-foreground py-10">
+                            Tidak ada data untuk grafik anggaran vs realisasi.
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

@@ -15,6 +15,7 @@ import { createTransactionAction } from "./actions";
 import { AddTransactionModal } from "@/components/transactions/add-transaction-modal";
 import { TransactionActions } from "@/components/transactions/transaction-actions";
 import { convertToCustomUrl } from "@/lib/utils/upload";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"; // Diimpor untuk modal detail
 
 // Tipe data
 type Transaction = {
@@ -83,6 +84,11 @@ export function TransactionsClientPage({
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [message, setMessage] = useState("");
+    
+    // State baru untuk modal detail transaksi
+    const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
     const router = useRouter();
 
     // Cek apakah user bisa edit/approve
@@ -115,7 +121,7 @@ export function TransactionsClientPage({
             if (result.success) {
                 setMessage("Transaksi berhasil dibuat! Klik refresh untuk melihat data terbaru.");
                 setTimeout(() => setMessage(""), 5000);
-                setTimeout(() => router.refresh(), 500);
+                router.refresh(); // Menghapus timeout agar lebih responsif
             } else {
                 setMessage(result.message);
             }
@@ -158,10 +164,22 @@ export function TransactionsClientPage({
     };
 
     const handleEditTransaction = (transaction: Transaction) => {
-        // TODO: Implement edit modal
+        // TODO: Implement edit modal (jika ada)
         console.log("Edit transaction:", transaction);
         setMessage("Fitur edit akan segera tersedia.");
         setTimeout(() => setMessage(""), 3000);
+    };
+
+    // Fungsi untuk membuka modal detail transaksi
+    const handleRowClick = (transaction: Transaction) => {
+        setSelectedTransaction(transaction);
+        setIsDetailModalOpen(true);
+    };
+
+    // Fungsi untuk menutup modal detail transaksi
+    const handleCloseDetailModal = () => {
+        setSelectedTransaction(null);
+        setIsDetailModalOpen(false);
     };
 
     return (
@@ -233,7 +251,11 @@ export function TransactionsClientPage({
                             <TableBody>
                                 {filteredTransactions.length > 0 ? (
                                     filteredTransactions.map(t => (
-                                        <TableRow key={t.id}>
+                                        <TableRow 
+                                            key={t.id} 
+                                            onClick={() => handleRowClick(t)} // Event onClick untuk membuka modal detail
+                                            className="cursor-pointer hover:bg-muted/50" // Gaya kursor agar terlihat interaktif
+                                        >
                                             <TableCell className="font-medium">
                                                 {formatDate(t.transaction_date)}
                                             </TableCell>
@@ -264,28 +286,37 @@ export function TransactionsClientPage({
                                                 )}
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                {t.receipt_url ? (
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => window.open(convertToCustomUrl(t.receipt_url), '_blank')}
-                                                        className="h-8 w-8 p-0"
-                                                        title="Lihat bukti transaksi"
-                                                    >
-                                                        <Eye className="h-4 w-4" />
-                                                    </Button>
-                                                ) : (
-                                                    <span className="text-muted-foreground text-xs">-</span>
-                                                )}
+                                                {/* Tambahkan wrapper div dengan e.stopPropagation() di sini */}
+                                                <div onClick={(e) => e.stopPropagation()}> 
+                                                    {t.receipt_url ? (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={(e) => { // Mencegah bubbling event ke TableRow
+                                                                e.stopPropagation(); 
+                                                                window.open(convertToCustomUrl(t.receipt_url), '_blank');
+                                                            }}
+                                                            className="h-8 w-8 p-0"
+                                                            title="Lihat bukti transaksi"
+                                                        >
+                                                            <Eye className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-muted-foreground text-xs">-</span>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             {canEditTransactions && (
                                                 <TableCell className="text-center">
-                                                    <TransactionActions
-                                                        transaction={t}
-                                                        canEdit={canEditTransactions}
-                                                        onEdit={handleEditTransaction}
-                                                        onUpdateStatus={handleUpdateStatus}
-                                                    />
+                                                    {/* Tambahkan wrapper div dengan e.stopPropagation() di sini */}
+                                                    <div onClick={(e) => e.stopPropagation()}> 
+                                                        <TransactionActions
+                                                            transaction={t}
+                                                            canEdit={canEditTransactions}
+                                                            onEdit={handleEditTransaction}
+                                                            onUpdateStatus={handleUpdateStatus}
+                                                        />
+                                                    </div>
                                                 </TableCell>
                                             )}
                                         </TableRow>
@@ -311,6 +342,74 @@ export function TransactionsClientPage({
                 categories={serverCategories}
                 isLoading={isLoading}
             />
+
+            {/* Modal Detail Transaksi */}
+            <Dialog open={isDetailModalOpen} onOpenChange={handleCloseDetailModal}>
+                <DialogContent className="sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle>Detail Transaksi</DialogTitle>
+                        <DialogDescription>
+                            Informasi lengkap mengenai transaksi terpilih.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedTransaction && (
+                        <div className="py-4 space-y-3 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Tanggal Transaksi:</span>
+                                <span>{formatDate(selectedTransaction.transaction_date)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Deskripsi:</span>
+                                <span>{selectedTransaction.description}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Jumlah:</span>
+                                <span className={selectedTransaction.type === 'Pemasukan' ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                                    {selectedTransaction.type === 'Pemasukan' ? '+' : '-'} {formatRupiah(selectedTransaction.amount)}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Jenis:</span>
+                                <span>{selectedTransaction.type}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Kategori:</span>
+                                <span>{selectedTransaction.category?.name || 'Lain-lain'}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Pengaju:</span>
+                                <span>{selectedTransaction.requester?.full_name || 'N/A'}</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Status:</span>
+                                <Badge variant="outline" className={statusColors[selectedTransaction.status]}>
+                                    {selectedTransaction.status}
+                                </Badge>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <span className="font-semibold text-muted-foreground">Disetujui Oleh:</span>
+                                <span>{selectedTransaction.approver?.full_name || '-'}</span>
+                            </div>
+                            {selectedTransaction.receipt_url && (
+                                <div className="grid grid-cols-2 gap-2 items-center">
+                                    <span className="font-semibold text-muted-foreground">Bukti Transaksi:</span>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => window.open(convertToCustomUrl(selectedTransaction.receipt_url!), '_blank')}
+                                        className="w-fit"
+                                    >
+                                        <Eye className="h-4 w-4 mr-2" /> Lihat Bukti
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    <DialogFooter>
+                        <Button onClick={handleCloseDetailModal}>Tutup</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
