@@ -1,150 +1,127 @@
-// app/direktur/budgeting/page.tsx
+// app/direktur/budgeting/page.tsx - Optimized version
+
 import { createClient } from "@/lib/supabase/server";
 import { BudgetClientPage } from "./budget-client-page";
-import { format, eachMonthOfInterval, startOfMonth, endOfMonth, parseISO } from 'date-fns'; // Import date-fns utilities
+import { Suspense } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Tipe data untuk konsistensi
-type Category = { id: string; name: string; description: string | null };
-type Budget = {
-  id: string;
-  category_id: string;
-  period_start: string;
-  period_end: string;
-  allocated_amount: number;
-  category: { name: string } | null;
-};
+// Loading component untuk Suspense
+function BudgetPageSkeleton() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-1">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[...Array(3)].map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-24" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {[...Array(2)].map((_, i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
 
-// New type for Transaction, adding category_id for linking
-type Transaction = {
-  id: string;
-  transaction_date: string;
-  amount: number;
-  type: 'Pemasukan' | 'Pengeluaran';
-  category_id: string | null;
-};
-
-// New type for chart data
-type ChartDataPoint = {
-  date: string; // "YYYY-MM"
-  'Anggaran Dialokasikan': number; // Total allocated budget for the month
-  'Realisasi Pengeluaran': number; // Total actual expenses for the month
-};
-
-// Fungsi untuk mengambil dan memproses data dari server
-async function getBudgetData(): Promise<{ 
-    categories: Category[]; 
-    budgets: Budget[]; 
-    chartData: ChartDataPoint[]; 
-    chartConfig: Record<string, { label: string; color: string }>; 
-}> {
+// Optimized data fetching function
+async function getBudgetData() {
   const supabase = await createClient();
 
   try {
-    // Ambil semua kategori anggaran
-    const { data: categories, error: catError } = await supabase
-      .from('BudgetCategories')
-      .select('*')
-      .order('name');
+    // Parallel queries untuk mengurangi waktu loading
+    const [categoriesResult, budgetsResult] = await Promise.all([
+      // Query categories dengan limit jika diperlukan
+      supabase
+        .from('BudgetCategories')
+        .select('id, name, description')
+        .order('name', { ascending: true })
+        .limit(100), // Tambah limit untuk performance
 
-    if (catError) throw new Error(`Error fetching categories: ${catError.message}`);
+      // Query budgets dengan join yang lebih efisien
+      supabase
+        .from('Budgets')
+        .select(`
+          id,
+          period_start,
+          period_end,
+          allocated_amount,
+          category:BudgetCategories!inner(name)
+        `)
+        .order('period_start', { ascending: false })
+        .limit(50) // Tambah limit untuk performance
+    ]);
 
-    // Ambil semua rencana anggaran
-    const { data: budgets, error: budgetError } = await supabase
-      .from('Budgets')
-      .select('*, category:BudgetCategories(name)')
-      .order('period_start', { ascending: false });
+    // Error handling
+    if (categoriesResult.error) {
+      console.error("Error fetching categories:", categoriesResult.error);
+      throw new Error(`Categories fetch failed: ${categoriesResult.error.message}`);
+    }
 
-    if (budgetError) throw new Error(`Error fetching budgets: ${budgetError.message}`);
-
-    // Ambil semua transaksi yang relevan untuk perhitungan realisasi (hanya Pengeluaran yang Disetujui/Tertunda)
-    const { data: transactions, error: transactionError } = await supabase
-      .from('Transactions')
-      .select('id, transaction_date, amount, type, category_id')
-      .in('status', ['Disetujui', 'Tertunda']); // Hanya hitung transaksi yang sudah disetujui atau tertunda
-
-    if (transactionError) throw new Error(`Error fetching transactions: ${transactionError.message}`);
-
-    // --- Data Processing for Chart ---
-    const monthlyTotalActualsMap: Map<string, number> = new Map();
-    const monthlyTotalAllocatedMap: Map<string, number> = new Map();
-
-    // Process Budgets for allocated amounts (distributed monthly)
-    budgets.forEach(budget => {
-      const start = parseISO(budget.period_start);
-      const end = parseISO(budget.period_end);
-      const monthsInPeriod = eachMonthOfInterval({ start, end });
-
-      if (monthsInPeriod.length === 0) return;
-
-      // Distribute allocated amount evenly across months in the period
-      const monthlyAllocatedAmount = budget.allocated_amount / monthsInPeriod.length;
-
-      monthsInPeriod.forEach(month => {
-        const monthKey = format(month, 'yyyy-MM');
-        monthlyTotalAllocatedMap.set(monthKey, (monthlyTotalAllocatedMap.get(monthKey) || 0) + monthlyAllocatedAmount);
-      });
-    });
-
-    // Process Transactions for actual spending (only 'Pengeluaran')
-    transactions.forEach(transaction => {
-        if (transaction.type === 'Pengeluaran') {
-            const transactionDate = parseISO(transaction.transaction_date);
-            const monthKey = format(transactionDate, 'yyyy-MM');
-            monthlyTotalActualsMap.set(monthKey, (monthlyTotalActualsMap.get(monthKey) || 0) + transaction.amount);
-        }
-    });
-
-    // Combine all unique month keys from both maps
-    const allMonthKeys = new Set<string>();
-    monthlyTotalActualsMap.forEach((_val, key) => allMonthKeys.add(key));
-    monthlyTotalAllocatedMap.forEach((_val, key) => allMonthKeys.add(key));
-
-    const sortedMonthKeys = Array.from(allMonthKeys).sort();
-
-    // Build the final chart data array
-    const chartData: ChartDataPoint[] = [];
-    sortedMonthKeys.forEach(monthKey => {
-      chartData.push({
-        date: monthKey,
-        'Anggaran Dialokasikan': monthlyTotalAllocatedMap.get(monthKey) || 0,
-        'Realisasi Pengeluaran': monthlyTotalActualsMap.get(monthKey) || 0,
-      });
-    });
-
-    // Define chart configuration for shadcn/ui chart component
-    const chartConfig = {
-      'Anggaran Dialokasikan': {
-        label: 'Anggaran Dialokasikan',
-        color: 'hsl(var(--chart-1))', // Menggunakan variabel CSS untuk warna tema
-      },
-      'Realisasi Pengeluaran': {
-        label: 'Realisasi Pengeluaran',
-        color: 'hsl(var(--chart-2))',
-      },
-    };
+    if (budgetsResult.error) {
+      console.error("Error fetching budgets:", budgetsResult.error);
+      throw new Error(`Budgets fetch failed: ${budgetsResult.error.message}`);
+    }
 
     return {
-      categories: categories ?? [],
-      budgets: budgets ?? [],
-      chartData: chartData,
-      chartConfig: chartConfig,
+      categories: categoriesResult.data || [],
+      budgets: budgetsResult.data || [],
     };
-  } catch (error) {
-    console.error("Error fetching budget data for chart:", error);
-    return { categories: [], budgets: [], chartData: [], chartConfig: {} };
+
+  } catch (error: any) {
+    console.error("Error in getBudgetData:", error);
+    
+    // Return empty data instead of throwing to prevent page crash
+    return {
+      categories: [],
+      budgets: [],
+      error: error.message
+    };
   }
 }
 
-// Komponen Server Utama untuk halaman Budgeting
-export default async function BudgetingPage() {
-  const { categories, budgets, chartData, chartConfig } = await getBudgetData();
+// Optimized server component
+async function BudgetPageContent() {
+  const { categories, budgets, error } = await getBudgetData();
 
-  // Fallback UI jika tidak ada data
-  if (!categories.length && !budgets.length && !chartData.length) {
+  // Error boundary
+  if (error) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="text-center text-red-500">
-          Gagal memuat data atau tidak ada data untuk ditampilkan. Silakan coba lagi nanti.
+      <div className="flex flex-col gap-4 items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">
+            Gagal Memuat Data
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Terjadi kesalahan saat mengambil data anggaran.
+          </p>
+          <p className="text-xs text-red-500 bg-red-50 p-2 rounded">
+            {error}
+          </p>
         </div>
       </div>
     );
@@ -153,9 +130,16 @@ export default async function BudgetingPage() {
   return (
     <BudgetClientPage 
       serverCategories={categories} 
-      serverBudgets={budgets} 
-      chartData={chartData} // Teruskan data chart
-      chartConfig={chartConfig} // Teruskan konfigurasi chart
+      serverBudgets={budgets}
     />
+  );
+}
+
+// Main page component dengan Suspense
+export default function BudgetingPage() {
+  return (
+    <Suspense fallback={<BudgetPageSkeleton />}>
+      <BudgetPageContent />
+    </Suspense>
   );
 }

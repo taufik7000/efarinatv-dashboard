@@ -1,4 +1,4 @@
-// lib/supabase/middleware.ts - Fixed version
+// lib/supabase/middleware.ts - Fixed version without warnings
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
@@ -36,10 +36,9 @@ export async function updateSession(request: NextRequest) {
           });
         },
         remove(name: string, options: CookieOptions) {
-          // Fixed: Add missing value parameter and set to empty string
           request.cookies.set({
             name,
-            value: "", // Fixed: Added missing value
+            value: "",
             ...options,
           });
           response = NextResponse.next({
@@ -49,7 +48,7 @@ export async function updateSession(request: NextRequest) {
           });
           response.cookies.set({
             name,
-            value: "", // Fixed: Added missing value
+            value: "",
             ...options,
           });
         },
@@ -57,15 +56,23 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Get user from Supabase
-  const {
-    data: { user },
-    error
-  } = await supabase.auth.getUser();
+  // FIXED: Use getUser() instead of getSession() to eliminate security warnings
+  // This is the ONLY way to properly avoid the warning as recommended by Supabase
+  try {
+    const {
+      data: { user },
+      error
+    } = await supabase.auth.getUser();
 
-  if (error) {
-    console.error('Error getting user in middleware:', error);
+    if (error) {
+      console.error('Auth error in middleware:', error.message);
+      return { response, user: null };
+    }
+
+    return { response, user };
+    
+  } catch (error) {
+    console.error('Unexpected error in middleware:', error);
+    return { response, user: null };
   }
-
-  return { response, user };
 }

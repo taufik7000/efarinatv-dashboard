@@ -1,4 +1,5 @@
-// lib/supabase/server.ts
+// lib/supabase/server.ts - Updated untuk konsistensi
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
@@ -27,27 +28,22 @@ export async function createClient() {
             try {
               cookieStore.set({ name, value, ...options })
             } catch (error) {
-              // The `set` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-              console.warn('Cookie set warning:', error);
+              // Cookie set error bisa diabaikan di server components
+              // karena ini biasa terjadi saat rendering
             }
           },
           remove(name: string, options: CookieOptions) {
             try {
               cookieStore.set({ name, value: '', ...options })
             } catch (error) {
-              // The `delete` method was called from a Server Component.
-              // This can be ignored if you have middleware refreshing
-              // user sessions.
-              console.warn('Cookie remove warning:', error);
+              // Cookie remove error bisa diabaikan
             }
           },
         },
       }
     );
 
-    // Validasi client terbentuk dengan benar
+    // Validasi client berhasil dibuat
     if (!supabase) {
       throw new Error('Failed to create Supabase client');
     }
