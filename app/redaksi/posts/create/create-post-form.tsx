@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { 
-  ArrowLeft, 
-  Loader2, 
-  Upload, 
-  X, 
-  Eye, 
-  Save, 
+import {
+  ArrowLeft,
+  Loader2,
+  Upload,
+  X,
+  Eye,
+  Save,
   Send,
   Image as ImageIcon,
   Hash,
@@ -44,7 +44,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"success" | "error">("error");
-  
+
   // Form states
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -54,11 +54,11 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [status, setStatus] = useState("draft");
   const [featured, setFeatured] = useState(false);
-  
+
   // File upload states
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  
+
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -117,7 +117,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
 
     try {
       const result = await uploadPostThumbnail(selectedFile);
-      
+
       if (result.success && result.url) {
         setThumbnailUrl(result.url);
         setMessage("Thumbnail berhasil diupload!");
@@ -148,11 +148,11 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
 
     try {
       const result = await createPostAction(formData);
-      
+
       if (result.success) {
         setMessage(result.message);
         setMessageType("success");
-        
+
         setTimeout(() => {
           if (submitStatus === 'published') {
             router.push("/redaksi/posts");
@@ -187,7 +187,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-9">
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <Button variant="outline" size="sm" asChild>
@@ -196,7 +196,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
             Kembali
           </Link>
         </Button>
-        
+
         <div className="flex items-center gap-2">
           <Badge variant={status === 'published' ? 'default' : 'secondary'}>
             {status === 'published' ? 'Akan Dipublikasi' : 'Draft'}
@@ -211,19 +211,18 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
 
       {/* Message */}
       {message && (
-        <div className={`p-3 rounded-lg text-sm ${
-          messageType === 'success' 
-            ? 'bg-green-50 text-green-700 border border-green-200' 
+        <div className={`p-3 rounded-lg text-sm ${messageType === 'success'
+            ? 'bg-green-50 text-green-700 border border-green-200'
             : 'bg-red-50 text-red-700 border border-red-200'
-        }`}>
+          }`}>
           {message}
         </div>
       )}
 
-      <form ref={formRef} className="space-y-6">
-        <div className="grid gap-6 lg:grid-cols-3">
+      <form ref={formRef} className="space-y-9">
+        <div className="grid gap-6 lg:grid-cols-6">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-5">
             {/* Title & Content */}
             <Card>
               <CardHeader>
@@ -304,9 +303,9 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
                 ) : (
                   <div className="space-y-3">
                     <div className="relative">
-                      <img 
-                        src={thumbnailUrl} 
-                        alt="Thumbnail" 
+                      <img
+                        src={thumbnailUrl}
+                        alt="Thumbnail"
                         className="w-full max-h-48 object-cover rounded-lg border"
                       />
                       <Button
@@ -356,7 +355,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
                     disabled={isLoading}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Status Publikasi</Label>
                   <div className="flex gap-2">
@@ -435,7 +434,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
                   onKeyDown={handleTagInput}
                   disabled={isLoading || tags.length >= 5}
                 />
-                
+
                 {tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     {tags.map((tag) => (
@@ -492,7 +491,7 @@ export function CreatePostForm({ categories, existingTags }: CreatePostFormProps
             <Save className="mr-2 h-4 w-4" />
             Simpan Draft
           </Button>
-          
+
           <Button
             type="button"
             onClick={() => {
